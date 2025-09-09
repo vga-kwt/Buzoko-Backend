@@ -1,4 +1,14 @@
-import { IsString, IsNotEmpty, Matches, IsOptional, IsEmail, IsEnum, IsArray, ArrayNotEmpty, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Matches,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsArray,
+  ArrayNotEmpty,
+  IsObject,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole, RegistrationType } from '../schemas/user.enums';

@@ -51,7 +51,7 @@ ProfileSchema.index({ userId: 1 }, { unique: true });
 ProfileSchema.methods.toPublic = function () {
   const obj = this.toObject({ virtuals: true });
   return {
-    id: obj._id,
+    id: obj._id ? obj._id.toString() : undefined,
     fullName: obj.fullName,
     avatarUrl: obj.avatarUrl,
     locale: obj.locale,
@@ -64,7 +64,9 @@ ProfileSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc: any, ret: any) => {
-    ret.id = ret._id;
+    if (ret._id != null) {
+      ret.id = ret._id.toString();
+    }
     delete ret._id;
     return ret;
   },

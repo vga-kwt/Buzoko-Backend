@@ -1,19 +1,31 @@
 import {
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
   Req,
+  UnauthorizedException,
   UseGuards,
   UsePipes,
   ValidationPipe,
-  Delete,
-  UnauthorizedException,
-  ForbiddenException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiBadRequestResponse, ApiParam, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -49,8 +61,7 @@ export class ProfilesController {
     if (requesterId !== dto.userId && !req.user?.roles?.includes('admin')) {
       throw new ForbiddenException('Forbidden: cannot create profile for other user');
     }
-    const profile = await this.profilesService.create(dto);
-    return profile;
+    return await this.profilesService.create(dto);
   }
 
   /**
@@ -72,7 +83,10 @@ export class ProfilesController {
   @Get('/me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiBearerAuth()
-  @ApiOkResponse({ schema: { oneOf: [ { $ref: getSchemaPath(PublicProfileDto) }, { type: 'null' } ] }, description: 'Returns current profile or null if not found' })
+  @ApiOkResponse({
+    schema: { oneOf: [{ $ref: getSchemaPath(PublicProfileDto) }, { type: 'null' }] },
+    description: 'Returns current profile or null if not found',
+  })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
   @UseGuards(JwtAuthGuard)
   async me(@Req() req: any): Promise<PublicProfileDto | null> {
@@ -113,7 +127,10 @@ export class ProfilesController {
   @ApiOperation({ summary: 'Delete profile by id (owner or admin)' })
   @ApiParam({ name: 'id', required: true, description: 'Profile id' })
   @ApiBearerAuth()
-  @ApiOkResponse({ description: 'Delete status', schema: { properties: { success: { type: 'boolean', example: true } } } })
+  @ApiOkResponse({
+    description: 'Delete status',
+    schema: { properties: { success: { type: 'boolean', example: true } } },
+  })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
   @ApiForbiddenResponse({ description: 'Forbidden: cannot delete this profile' })
   @ApiNotFoundResponse({ description: 'Profile not found' })

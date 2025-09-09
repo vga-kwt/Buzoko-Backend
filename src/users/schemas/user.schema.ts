@@ -10,7 +10,6 @@ export type UserDocument = HydratedDocument<User>;
   versionKey: false,
 })
 export class User {
-
   @Prop({
     type: [String],
     enum: Object.values(UserRole),
@@ -64,7 +63,10 @@ UserSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: (_doc, ret: any) => {
-    ret.id = ret._id;
+    // Ensure id is a string, not ObjectId
+    if (ret._id != null) {
+      ret.id = ret._id.toString();
+    }
     delete ret._id;
     delete ret.passwordHash;
     return ret;

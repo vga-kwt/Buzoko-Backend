@@ -1,10 +1,21 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString, MaxLength, IsDateString, IsEnum } from 'class-validator';
+import {
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsDateString,
+  IsEnum,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '../schemas/profile.enums';
 
 export class CreateProfileDto {
-  @ApiProperty({ description: 'User id (MongoDB ObjectId) for which to create the profile', example: '64f9a2c2b6e0b8f3a1a2b3c4' })
+  @ApiProperty({
+    description: 'User id (MongoDB ObjectId) for which to create the profile',
+    example: '64f9a2c2b6e0b8f3a1a2b3c4',
+  })
   @IsMongoId()
   @IsNotEmpty()
   userId!: string;
@@ -21,7 +32,11 @@ export class CreateProfileDto {
   @IsString()
   avatarUrl?: string;
 
-  @ApiProperty({ required: false, description: 'Date of birth (ISO string)', example: '1990-01-01' })
+  @ApiProperty({
+    required: false,
+    description: 'Date of birth (ISO string)',
+    example: '1990-01-01',
+  })
   @IsOptional()
   @IsDateString()
   dob?: string;

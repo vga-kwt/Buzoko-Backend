@@ -7,15 +7,12 @@ import { PublicUserDto } from './dto/public-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { UserStatus, UserRole } from './schemas/user.enums';
 import { plainToInstance } from 'class-transformer';
-import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
 
   /**
    * Create a new user. Phone is required; if a user with the phone already exists,
@@ -139,7 +136,6 @@ export class UsersService {
     return plainToInstance(PublicUserDto, plain, { excludeExtraneousValues: true });
   }
 
-
   /**
    * Find user and include passwordHash (select +passwordHash)
    */
@@ -190,5 +186,3 @@ export class UsersService {
     return this.toPublic(created as any);
   }
 }
-
-

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -10,10 +11,20 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
-  NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse, ApiBadRequestResponse, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiParam, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,8 +37,7 @@ import { AuthService } from '../auth/auth.service';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService,
-              private readonly auth: AuthService) {}
+  constructor(private readonly usersService: UsersService, private readonly auth: AuthService) {}
 
   /**
    * Create user (idempotent by phone). This endpoint is suitable for issuing an OTP-BACKED
@@ -42,7 +52,7 @@ export class UsersController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async create(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
-    await this.auth.issueOtp(createUserDto.phoneE164)
+    await this.auth.issueOtp(createUserDto.phoneE164);
     return user;
   }
 
@@ -67,7 +77,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: 'Find user by phone (E.164) via query param' })
   @ApiQuery({ name: 'phone', required: true, example: '+15551234567' })
-  @ApiOkResponse({ schema: { oneOf: [ { $ref: getSchemaPath(PublicUserDto) }, { type: 'null' } ] } })
+  @ApiOkResponse({ schema: { oneOf: [{ $ref: getSchemaPath(PublicUserDto) }, { type: 'null' }] } })
   @ApiBadRequestResponse({ description: 'Missing phone query param' })
   async getByPhone(@Query('phone') phone?: string) {
     if (!phone) return { message: 'phone query param required' };
@@ -83,7 +93,10 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Get current authenticated user' })
   @ApiBearerAuth()
-  @ApiOkResponse({ schema: { oneOf: [ { $ref: getSchemaPath(PublicUserDto) }, { type: 'null' } ] }, description: 'Returns current user or null if not authenticated' })
+  @ApiOkResponse({
+    schema: { oneOf: [{ $ref: getSchemaPath(PublicUserDto) }, { type: 'null' }] },
+    description: 'Returns current user or null if not authenticated',
+  })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
   @UseGuards(JwtAuthGuard)
   async me(@Req() req: any) {
@@ -110,7 +123,6 @@ export class UsersController {
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   @UseGuards(JwtAuthGuard)
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    const updated = await this.usersService.update(id, dto);
-    return updated;
+    return await this.usersService.update(id, dto);
   }
 }

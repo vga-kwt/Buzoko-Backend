@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -11,9 +11,7 @@ import { plainToInstance } from 'class-transformer';
 export class ProfilesService {
   private readonly logger = new Logger(ProfilesService.name);
 
-  constructor(
-    @InjectModel(Profile.name) private readonly profileModel: Model<ProfileDocument>,
-  ) {}
+  constructor(@InjectModel(Profile.name) private readonly profileModel: Model<ProfileDocument>) {}
 
   /**
    * Create profile (one-to-one). If profile exists for userId, returns existing.

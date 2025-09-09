@@ -1,5 +1,12 @@
 import * as bcrypt from 'bcryptjs';
-import { Injectable, Logger, BadRequestException, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { RedisService } from '../redis/redis.service';
 import { SmsService } from '../sms/sms.service';
 import { UsersService } from '../users/users.service';
@@ -21,7 +28,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly smsService: SmsService,
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtService
   ) {}
 
   private otpKey(phone: string) {
@@ -55,7 +62,7 @@ export class AuthService {
 
     // send SMS via provided SmsService
     const message = `Your verification code is ${code}. It will expire in ${Math.floor(
-      this.otpTtl / 60,
+      this.otpTtl / 60
     )} minutes.`;
     const smsResult = await this.smsService.sendSms(phoneE164, message);
 
@@ -82,8 +89,13 @@ export class AuthService {
 
     // find or create user (UsersService.create is idempotent by phone)
     const createdOrExisting = await this.usersService.create({ phoneE164 } as any);
-    // createdOrExisting is PublicUserDto (contains id). We need id and roles.
-    const userId = (createdOrExisting as any).id;
+    // Normalize id to a string robustly (handles ObjectId or string)
+    const rawId = (createdOrExisting as any).id ?? (createdOrExisting as any)._id;
+    const userId = typeof rawId === 'string' ? rawId : rawId?.toString?.();
+    if (!userId) {
+      this.logger.error('Failed to resolve userId after OTP verification', { createdOrExisting });
+      throw new BadRequestException('Unable to resolve user id');
+    }
     const roles = (createdOrExisting as any).roles || ['client'];
 
     // issue tokens
@@ -109,7 +121,11 @@ export class AuthService {
     });
 
     // store refresh token in Redis (single refresh per user behavior)
-    await this.redis.set(this.refreshKey(userId), refreshToken, this.parseExpiry(process.env.JWT_REFRESH_EXPIRY || '7d'));
+    await this.redis.set(
+      this.refreshKey(userId),
+      refreshToken,
+      this.parseExpiry(process.env.JWT_REFRESH_EXPIRY || '7d')
+    );
 
     return {
       accessToken,
@@ -134,8 +150,7 @@ export class AuthService {
     }
 
     // issue new tokens and replace stored refresh
-    const tokens = await this.issueTokens(userId, payload.roles || []);
-    return tokens;
+    return await this.issueTokens(userId, payload.roles || []);
   }
 
   /** Logout / revoke refresh token */
@@ -180,16 +195,24 @@ export class AuthService {
         throw new ConflictException('User already registered. Use login or reset password.');
       }
       // set password on existing user
-      const updated = await this.usersService.setPasswordHash((existing as any).id || (existing as any)._id, passwordHash);
+      const updated = await this.usersService.setPasswordHash(
+        (existing as any).id || (existing as any)._id,
+        passwordHash
+      );
       // optionally update email
       if (dto.email) {
-        await this.usersService.update((existing as any).id || (existing as any)._id, { email: dto.email } as any);
+        await this.usersService.update((existing as any).id || (existing as any)._id, {
+          email: dto.email,
+        } as any);
       }
       return { success: true, message: 'Password set. Please verify phone before login.' };
     }
 
     // create user with hashed password
-    await this.usersService.createWithPassword({ phoneE164: phone, email: dto.email }, passwordHash);
+    await this.usersService.createWithPassword(
+      { phoneE164: phone, email: dto.email },
+      passwordHash
+    );
     return { success: true, message: 'Registered. Please verify phone before login.' };
   }
 
@@ -233,5 +256,4 @@ export class AuthService {
     await this.usersService.setLastLogin(userId).catch(() => null);
     return tokens;
   }
-
 }
