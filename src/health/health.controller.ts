@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery, ApiBadRequestResponse } from '@nestjs/swagger';
 import { SmsService } from '../sms/sms.service';
 
 @ApiTags('Health')
@@ -8,6 +8,8 @@ export class HealthController {
   constructor(private readonly smsService: SmsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Health check' })
+  @ApiOkResponse({ description: 'Service status', schema: { properties: { status: { type: 'string', example: 'ok' }, timestamp: { type: 'string', format: 'date-time' } } } })
   get() {
     return { status: 'ok', timestamp: new Date().toISOString() };
   }
@@ -19,6 +21,10 @@ export class HealthController {
    */
   @Get('send-sms')
   @ApiOperation({ summary: 'Send test SMS (query params: to, message)' })
+  @ApiQuery({ name: 'to', required: true, description: 'Destination phone number' })
+  @ApiQuery({ name: 'message', required: false, description: 'Message to send', example: 'Hello' })
+  @ApiOkResponse({ description: 'Result of sending test SMS', schema: { oneOf: [ { type: 'object', properties: { success: { type: 'boolean', example: true }, data: { type: 'object' } } }, { type: 'object', properties: { success: { type: 'boolean', example: false }, error: { type: 'string' } } } ] } })
+  @ApiBadRequestResponse({ description: 'Missing required query param "to"' })
   async sendSms(
     @Query('to') to: string,
     @Query('message') message = 'Test SMS from Health endpoint'
