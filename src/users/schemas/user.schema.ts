@@ -55,6 +55,14 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
+// Virtual relation: one User -> many Addresses
+UserSchema.virtual('addresses', {
+  ref: 'Address',
+  localField: '_id',
+  foreignField: 'userId',
+  options: { sort: { isDefault: -1, updatedAt: -1 } },
+});
+
 UserSchema.index({ phoneE164: 1 }, { unique: true, sparse: true });
 UserSchema.index({ email: 1 }, { unique: true, sparse: true });
 UserSchema.index({ roles: 1, status: 1 });

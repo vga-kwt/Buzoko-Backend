@@ -51,7 +51,7 @@ export class UsersService {
    * Find user by id. Throws NotFoundException if not found.
    */
   async findById(id: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(id).exec();
+    const user = await this.userModel.findById(id).populate('addresses').exec();
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
