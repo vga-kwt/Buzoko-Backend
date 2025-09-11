@@ -7,12 +7,16 @@ import { PublicUserDto } from './dto/public-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { UserStatus, UserRole } from './schemas/user.enums';
 import { plainToInstance } from 'class-transformer';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * Create a new user. Phone is required; if a user with the phone already exists,
@@ -44,6 +48,12 @@ export class UsersService {
     });
 
     this.logger.log(`Created user ${created._id} (phone=${phone})`);
+    // Ensure default notifications document exists with defaults true/true
+    try {
+      await this.notificationsService.updateUserNotifications(created._id.toString(), {});
+    } catch (e: any) {
+      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+    }
     return this.toPublic(created);
   }
 
@@ -171,6 +181,12 @@ export class UsersService {
       existing.passwordHash = passwordHash;
       if (createDto.email) existing.email = createDto.email;
       await existing.save();
+      // Ensure notifications defaults exist
+      try {
+        await this.notificationsService.updateUserNotifications(existing._id.toString(), {});
+      } catch (e: any) {
+        this.logger.warn(`Failed to initialize notifications for user ${existing._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+      }
       return this.toPublic(existing as any);
     }
 
@@ -182,7 +198,11 @@ export class UsersService {
       metadata: createDto.metadata ?? undefined,
       registrationType: createDto.registrationType ?? undefined,
     });
-
+    try {
+      await this.notificationsService.updateUserNotifications(created._id.toString(), {});
+    } catch (e: any) {
+      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+    }
     return this.toPublic(created as any);
   }
 }
