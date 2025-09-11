@@ -11,5 +11,3 @@ import { Address, AddressSchema } from './schemas/address.schema';
   exports: [AddressesService],
 })
 export class AddressesModule {}
-
-

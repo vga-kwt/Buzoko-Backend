@@ -52,5 +52,3 @@ AddressSchema.set('toJSON', {
     return ret;
   },
 });
-
-

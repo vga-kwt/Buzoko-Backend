@@ -9,5 +9,3 @@ export class PublicAddressDto {
   apartmentNo?: string;
   isDefault!: boolean;
 }
-
-

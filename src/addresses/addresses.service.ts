@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Address, AddressDocument } from './schemas/address.schema';
@@ -9,7 +9,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 export class AddressesService {
   constructor(
     @InjectModel(Address.name)
-    private readonly addressModel: Model<AddressDocument>,
+    private readonly addressModel: Model<AddressDocument>
   ) {}
 
   async createForUser(userId: string, dto: CreateAddressDto) {
@@ -64,7 +64,9 @@ export class AddressesService {
   async makeDefault(userId: string, id: string) {
     const userObjectId = new Types.ObjectId(userId);
     const _id = new Types.ObjectId(id);
-    const exists = await this.addressModel.findOneAndUpdate({ _id, userId: userObjectId }, { $set: { isDefault: true } }, { new: true }).lean();
+    const exists = await this.addressModel
+      .findOneAndUpdate({ _id, userId: userObjectId }, { $set: { isDefault: true } }, { new: true })
+      .lean();
     if (!exists) throw new NotFoundException('Address not found');
     await this.ensureSingleDefault(userObjectId, _id);
     return this.mapIdString(exists);
@@ -73,7 +75,7 @@ export class AddressesService {
   private async ensureSingleDefault(userObjectId: Types.ObjectId, keepAddressId: Types.ObjectId) {
     await this.addressModel.updateMany(
       { userId: userObjectId, _id: { $ne: keepAddressId }, isDefault: true },
-      { $set: { isDefault: false } },
+      { $set: { isDefault: false } }
     );
   }
 
@@ -87,5 +89,3 @@ export class AddressesService {
     return ret;
   }
 }
-
-
