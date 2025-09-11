@@ -1,5 +1,26 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Req, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  Req,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -57,6 +78,4 @@ export class AddressesController {
   async remove(@Req() req: any, @Param('id') id: string) {
     return this.addressesService.removeForUser(req.user.id, id);
   }
-
 }
-

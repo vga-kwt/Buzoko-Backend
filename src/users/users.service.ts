@@ -144,6 +144,13 @@ export class UsersService {
   }
 
   /**
+   * Find user by id and include passwordHash (select +passwordHash)
+   */
+  async findByIdWithPassword(id: string) {
+    return this.userModel.findById(id).select('+passwordHash').exec();
+  }
+
+  /**
    * Set passwordHash for user (hashing done in caller or here).
    */
   async setPasswordHash(userId: string, passwordHash: string) {

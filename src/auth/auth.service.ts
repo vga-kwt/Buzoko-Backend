@@ -15,6 +15,7 @@ import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserStatus } from '../users/schemas/user.enums';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -255,5 +256,30 @@ export class AuthService {
     const tokens = await this.issueTokens(userId, roles);
     await this.usersService.setLastLogin(userId).catch(() => null);
     return tokens;
+  }
+
+  async resetPassword(dto: ResetPasswordDto, requesterId: any) {
+    // Determine the new password from either newPassword or legacy password field
+    const newPass = (dto as any).password;
+    if (!newPass) {
+      throw new BadRequestException('New password is required');
+    }
+
+    // Load user with passwordHash for verification
+    const user = await this.usersService.findByIdWithPassword(String(requesterId));
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Hash and set new password
+    const passwordHash = await bcrypt.hash(newPass, this.saltRounds);
+    try {
+      await this.usersService.setPasswordHash(String(requesterId), passwordHash);
+      // Revoke refresh token to logout other sessions
+      await this.revokeRefresh(String(requesterId)).catch(() => null);
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Failed to set password' };
+    }
+    return { success: true, message: 'Password updated successfully.' };
   }
 }

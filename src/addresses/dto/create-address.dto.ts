@@ -25,7 +25,9 @@ export class CreateAddressDto {
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  @Matches(/^[A-Za-z0-9 ]*$/u, { message: 'street must be alphanumeric (letters, numbers, spaces)' })
+  @Matches(/^[A-Za-z0-9 ]*$/u, {
+    message: 'street must be alphanumeric (letters, numbers, spaces)',
+  })
   street?: string;
 
   @ApiPropertyOptional({ maxLength: 20 })
@@ -51,5 +53,3 @@ export class CreateAddressDto {
   @IsBoolean()
   isDefault?: boolean;
 }
-
-

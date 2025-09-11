@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
@@ -6,6 +16,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { IssueOtpDto } from './dto/issue-otp.dto';
@@ -14,6 +25,8 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -121,5 +134,30 @@ export class AuthController {
   @HttpCode(200)
   async login(@Body() dto: LoginDto) {
     return this.auth.loginWithPassword(dto);
+  }
+
+  @Post('reset-password')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  @ApiOperation({
+    summary: 'Reset password for existing user; update password fo the current logged in user',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: 'Reset password result',
+    schema: {
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Validation error' })
+  @ApiUnauthorizedResponse({ description: 'User not found' })
+  @HttpCode(200)
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: any) {
+    const requesterId = req.user?.id || req.user?.sub;
+    if (!requesterId) throw new UnauthorizedException('Not authenticated');
+    return this.auth.resetPassword(dto, requesterId);
   }
 }
