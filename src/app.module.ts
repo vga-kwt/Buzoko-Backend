@@ -1,5 +1,6 @@
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { FaqsModule } from './faqs/faqs.module';
 import { RedisModule } from './redis/redis.module';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -24,6 +25,7 @@ dotenv.config();
     AddressesModule,
     AuthModule,
     NotificationsModule,
+    FaqsModule,
   ],
 })
 export class AppModule {}
