@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
+import { AddressesModule } from './addresses/addresses.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -19,6 +20,7 @@ dotenv.config();
     HealthModule,
     UsersModule,
     ProfilesModule,
+    AddressesModule,
     AuthModule,
   ],
 })
