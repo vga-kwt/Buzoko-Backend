@@ -2,6 +2,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Messages } from '../constants/messages';
 
 export const RESPONSE_MESSAGE_KEY = 'response_message_key';
 
@@ -22,9 +23,10 @@ export class ResponseInterceptor implements NestInterceptor {
           return data;
         }
         const normalized = data == null ? [] : Array.isArray(data) ? data : [data];
+        const autoMessage = normalized.length === 0 ? Messages.NOT_FOUND : (message || Messages.FETCH_SUCCESS);
         return {
           success: true,
-          message: message,
+          message: autoMessage,
           // Ensure array of objects as requested
           data: normalized,
         };
