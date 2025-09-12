@@ -1,8 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 dotenv.config();
 
@@ -16,6 +18,11 @@ async function bootstrap() {
       forbidUnknownValues: false,
     }),
   );
+
+  // Global response wrapper
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ResponseInterceptor(reflector));
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Register a simple root GET route to verify the server is running (http://localhost:3000/)
   const httpAdapter: any = app.getHttpAdapter();

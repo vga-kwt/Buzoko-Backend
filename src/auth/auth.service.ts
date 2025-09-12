@@ -17,12 +17,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserStatus } from '../users/schemas/user.enums';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Messages } from '../common/constants/messages';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private otpTtl = Number(process.env.OTP_TTL || 300);
-  private otpRateLimit = Number(process.env.OTP_RATE_LIMIT || 5);
+  private otpRateLimit = Number(process.env.OTP_RATE_LIMIT || 1000);
   private otpRateWindow = Number(process.env.OTP_RATE_WINDOW || 3600);
   private saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12);
 
@@ -53,7 +54,7 @@ export class AuthService {
       await this.redis.expire(rateKey, this.otpRateWindow);
     }
     if (cur > this.otpRateLimit) {
-      throw new BadRequestException('Exceeded max OTP requests. Try later.');
+      throw new BadRequestException(Messages.AUTH_RATE_LIMIT);
     }
 
     // generate code (4-digit)
@@ -71,7 +72,7 @@ export class AuthService {
 
     if (!smsResult.success) {
       this.logger.warn('Failed to send OTP SMS', smsResult);
-      throw new BadRequestException('Failed to send OTP');
+      throw new BadRequestException(Messages.AUTH_FAILED_SEND_OTP);
     }
 
     return { success: true, ttl: this.otpTtl };
@@ -85,12 +86,17 @@ export class AuthService {
     }
 
     const rateKey = this.otpRateKey(normalized);
-    const cur = await this.redis.incr(rateKey);
-    if (cur === 1) {
-      await this.redis.expire(rateKey, this.otpRateWindow);
-    }
-    if (cur > this.otpRateLimit) {
-      throw new BadRequestException('Exceeded max OTP requests. Try later.');
+    const disableRate = String(process.env.OTP_RATE_DISABLE).toLowerCase() === 'true';
+    if (!disableRate) {
+      const cur = await this.redis.incr(rateKey);
+      if (cur === 1) {
+        await this.redis.expire(rateKey, this.otpRateWindow);
+      }
+      if (cur > this.otpRateLimit) {
+        throw new BadRequestException(Messages.AUTH_RATE_LIMIT);
+      }
+    } else {
+      this.logger.log('Email OTP rate limiting disabled via OTP_RATE_DISABLE=true');
     }
 
     const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -102,7 +108,7 @@ export class AuthService {
     const html = `<p>Your verification code is <b>${code}</b>.<br/>It will expire in ${minutes} minutes.</p>`;
     await this.mailService.sendMail({ to: normalized, subject, text, html }).catch((e) => {
       this.logger.warn('Failed to send OTP Email', e);
-      throw new BadRequestException('Failed to send OTP');
+      throw new BadRequestException(Messages.AUTH_FAILED_SEND_OTP);
     });
 
     return { success: true, ttl: this.otpTtl };
@@ -112,10 +118,10 @@ export class AuthService {
   async verifyOtp(phoneE164: string, code: string): Promise<AuthTokensDto> {
     const cached = await this.redis.get(this.otpKey(phoneE164));
     if (!cached) {
-      throw new BadRequestException('OTP expired or not found');
+      throw new BadRequestException(Messages.AUTH_OTP_EXPIRED_OR_NOT_FOUND);
     }
     if (cached !== code) {
-      throw new UnauthorizedException('Invalid OTP code');
+      throw new UnauthorizedException(Messages.AUTH_INVALID_OTP);
     }
 
     // OTP is valid — delete it
@@ -128,7 +134,7 @@ export class AuthService {
     const userId = typeof rawId === 'string' ? rawId : rawId?.toString?.();
     if (!userId) {
       this.logger.error('Failed to resolve userId after OTP verification', { createdOrExisting });
-      throw new BadRequestException('Unable to resolve user id');
+      throw new BadRequestException(Messages.AUTH_UNABLE_RESOLVE_USER_ID);
     }
     const roles = (createdOrExisting as any).roles || ['client'];
 
@@ -148,10 +154,10 @@ export class AuthService {
     const normalized = (email || '').toLowerCase();
     const cached = await this.redis.get(this.otpKey(normalized));
     if (!cached) {
-      throw new BadRequestException('OTP expired or not found');
+      throw new BadRequestException(Messages.AUTH_OTP_EXPIRED_OR_NOT_FOUND);
     }
     if (cached !== code) {
-      throw new UnauthorizedException('Invalid OTP code');
+      throw new UnauthorizedException(Messages.AUTH_INVALID_OTP);
     }
 
     await this.redis.del(this.otpKey(normalized));
@@ -167,7 +173,7 @@ export class AuthService {
     }
     if (!userId) {
       this.logger.error('Failed to resolve userId after email OTP verification', { email: normalized });
-      throw new BadRequestException('Unable to resolve user id');
+      throw new BadRequestException(Messages.AUTH_UNABLE_RESOLVE_USER_ID);
     }
 
     const roles = (existing as any)?.roles || ['client'];
@@ -210,12 +216,12 @@ export class AuthService {
     try {
       payload = this.jwtService.verify(refreshToken, { secret: process.env.JWT_SECRET });
     } catch (err) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException(Messages.AUTH_INVALID_REFRESH);
     }
     const userId = payload.sub;
     const stored = await this.redis.get(this.refreshKey(userId));
     if (!stored || stored !== refreshToken) {
-      throw new UnauthorizedException('Refresh token revoked or mismatched');
+      throw new UnauthorizedException(Messages.AUTH_REFRESH_REVOKED);
     }
 
     // issue new tokens and replace stored refresh
@@ -261,7 +267,7 @@ export class AuthService {
       // If password already set -> conflict
       const existingWithPassword = await this.usersService.findByPhoneWithPassword(phone);
       if (existingWithPassword && existingWithPassword.passwordHash) {
-        throw new ConflictException('User already registered. Use login or reset password.');
+        throw new ConflictException(Messages.AUTH_ALREADY_REGISTERED);
       }
       // set password on existing user
       const updated = await this.usersService.setPasswordHash(
@@ -274,7 +280,6 @@ export class AuthService {
           email: dto.email,
         } as any);
       }
-      return { success: true, message: 'Password set. Please verify phone before login.' };
     }
 
     // create user with hashed password
@@ -282,7 +287,7 @@ export class AuthService {
       { phoneE164: phone, email: dto.email },
       passwordHash
     );
-    return { success: true, message: 'Registered. Please verify phone before login.' };
+    return { success: true, message: Messages.AUTH_REGISTER_SUCCESS };
   }
 
   /**
@@ -297,24 +302,24 @@ export class AuthService {
     const phone = dto.phoneE164;
     const userDoc = await this.usersService.findByPhoneWithPassword(phone);
     if (!userDoc) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(Messages.AUTH_INVALID_CREDENTIALS);
     }
 
     // ensure active
     if (userDoc.status !== UserStatus.ACTIVE) {
-      throw new ForbiddenException('User is not active');
+      throw new ForbiddenException(Messages.AUTH_USER_NOT_ACTIVE);
     }
 
     // ensure phone verified
     if (!userDoc.phoneVerifiedAt) {
-      throw new ForbiddenException('Phone number not verified');
+      throw new ForbiddenException(Messages.AUTH_PHONE_NOT_VERIFIED);
     }
 
     // compare password
     const match = await bcrypt.compare(dto.password, (userDoc as any).passwordHash || '');
     if (!match) {
       // TODO: increment login attempt counter in Redis to prevent brute force
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(Messages.AUTH_INVALID_CREDENTIALS);
     }
 
     // issue tokens
@@ -330,7 +335,7 @@ export class AuthService {
     // Determine the new password from either newPassword or legacy password field
     const newPass = (dto as any).password;
     if (!newPass) {
-      throw new BadRequestException('New password is required');
+      throw new BadRequestException(Messages.AUTH_NEW_PASSWORD_REQUIRED);
     }
 
     // Load user with passwordHash for verification
@@ -348,6 +353,6 @@ export class AuthService {
     } catch (e: any) {
       return { success: false, message: e?.message || 'Failed to set password' };
     }
-    return { success: true, message: 'Password updated successfully.' };
+    return { success: true, message: Messages.AUTH_PASSWORD_RESET };
   }
 }
