@@ -46,7 +46,7 @@ export class AuthService {
   }
 
   /** Issue OTP: rate-limit, persist to Redis, send SMS */
-  async issueOtp(phoneE164: string): Promise<{ success: boolean; ttl: number }> {
+  async issueOtp(phoneE164: string): Promise<{ success: boolean; ttl: number; code: string }> {
     // rate limit
     const rateKey = this.otpRateKey(phoneE164);
     const cur = await this.redis.incr(rateKey);
@@ -75,7 +75,7 @@ export class AuthService {
       throw new BadRequestException(Messages.AUTH_FAILED_SEND_OTP);
     }
 
-    return { success: true, ttl: this.otpTtl };
+    return { success: true, ttl: this.otpTtl, code: code };
   }
 
   /** Issue OTP to email: rate-limit, persist to Redis, send Email */

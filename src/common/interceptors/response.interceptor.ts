@@ -23,7 +23,8 @@ export class ResponseInterceptor implements NestInterceptor {
           return data;
         }
         const normalized = data == null ? [] : Array.isArray(data) ? data : [data];
-        const autoMessage = normalized.length === 0 ? Messages.NOT_FOUND : (message || Messages.FETCH_SUCCESS);
+        const autoMessage =
+          normalized.length === 0 ? Messages.NOT_FOUND : message || Messages.FETCH_SUCCESS;
         return {
           success: true,
           message: autoMessage,

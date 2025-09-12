@@ -23,20 +23,19 @@ export const Messages = {
   COMMON_USER_NOT_FOUND: 'User not found',
   COMMON_OK: 'OK',
 
-  CREATE_SUCCESS: "Record created successfully.",
-  CREATE_FAILURE: "Failed to create record.",
+  CREATE_SUCCESS: 'Record created successfully.',
+  CREATE_FAILURE: 'Failed to create record.',
 
-  UPDATE_SUCCESS: "Record updated successfully.",
-  UPDATE_FAILURE: "Failed to update record.",
+  UPDATE_SUCCESS: 'Record updated successfully.',
+  UPDATE_FAILURE: 'Failed to update record.',
 
-  DELETE_SUCCESS: "Record deleted successfully.",
-  DELETE_FAILURE: "Failed to delete record.",
+  DELETE_SUCCESS: 'Record deleted successfully.',
+  DELETE_FAILURE: 'Failed to delete record.',
 
-  FETCH_SUCCESS: "Record fetched successfully.",
-  FETCH_FAILURE: "Failed to fetch record.",
+  FETCH_SUCCESS: 'Record fetched successfully.',
+  FETCH_FAILURE: 'Failed to fetch record.',
 
-  NOT_FOUND: "Record not found.",
-
+  NOT_FOUND: 'Record not found.',
 } as const;
 
 export type MessageKey = keyof typeof Messages;
