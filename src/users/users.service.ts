@@ -15,7 +15,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly notificationsService: NotificationsService,
+    private readonly notificationsService: NotificationsService
   ) {}
 
   /**
@@ -52,7 +52,11 @@ export class UsersService {
     try {
       await this.notificationsService.updateUserNotifications(created._id.toString(), {});
     } catch (e: any) {
-      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+      this.logger.warn(
+        `Failed to initialize notifications for user ${created._id}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
     }
     return this.toPublic(created);
   }
@@ -225,7 +229,11 @@ export class UsersService {
       try {
         await this.notificationsService.updateUserNotifications(existing._id.toString(), {});
       } catch (e: any) {
-        this.logger.warn(`Failed to initialize notifications for user ${existing._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+        this.logger.warn(
+          `Failed to initialize notifications for user ${existing._id}: ${
+            e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+          }`
+        );
       }
       return this.toPublic(existing as any);
     }
@@ -241,7 +249,11 @@ export class UsersService {
     try {
       await this.notificationsService.updateUserNotifications(created._id.toString(), {});
     } catch (e: any) {
-      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+      this.logger.warn(
+        `Failed to initialize notifications for user ${created._id}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
     }
     return this.toPublic(created as any);
   }

@@ -12,7 +12,7 @@ export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const message: string | undefined = this.reflector.getAllAndOverride<string>(
       RESPONSE_MESSAGE_KEY,
-      [context.getHandler(), context.getClass()],
+      [context.getHandler(), context.getClass()]
     );
 
     return next.handle().pipe(
@@ -28,9 +28,7 @@ export class ResponseInterceptor implements NestInterceptor {
           // Ensure array of objects as requested
           data: normalized,
         };
-      }),
+      })
     );
   }
 }
-
-

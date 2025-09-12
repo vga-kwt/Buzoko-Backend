@@ -19,10 +19,9 @@ export const Messages = {
   AUTH_INVALID_OTP: 'Invalid OTP code',
   AUTH_RATE_LIMIT: 'Exceeded max OTP requests. Try later.',
   AUTH_ALREADY_REGISTERED: 'User already registered. Use login or reset password.',
+  AUTH_GENERAL_ERROR: 'Something went wrong. Please try again later.',
   COMMON_USER_NOT_FOUND: 'User not found',
   COMMON_OK: 'OK',
 } as const;
 
 export type MessageKey = keyof typeof Messages;
-
-

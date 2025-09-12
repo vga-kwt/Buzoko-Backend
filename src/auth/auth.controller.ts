@@ -23,7 +23,6 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { IssueEmailOtpDto } from './dto/issue-email-otp.dto';
 import { VerifyEmailOtpDto } from './dto/verify-email-otp.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -92,7 +91,6 @@ export class AuthController {
     }) as any;
     const userId = payload.sub;
     await this.auth.revokeRefresh(userId);
-    return { success: true };
   }
 
   @Post('register')

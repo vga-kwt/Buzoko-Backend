@@ -11,5 +11,3 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
-
-

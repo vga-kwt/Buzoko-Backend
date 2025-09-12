@@ -24,5 +24,3 @@ export class CreateFaqDto {
   @IsNotEmpty()
   answerAr!: string;
 }
-
-

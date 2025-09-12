@@ -16,7 +16,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidUnknownValues: false,
-    }),
+    })
   );
 
   // Global response wrapper

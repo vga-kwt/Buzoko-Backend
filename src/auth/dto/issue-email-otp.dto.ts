@@ -7,5 +7,3 @@ export class IssueEmailOtpDto {
   @IsEmail()
   email!: string;
 }
-
-

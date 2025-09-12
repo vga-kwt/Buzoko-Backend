@@ -172,7 +172,9 @@ export class AuthService {
       userId = (created as any).id?.toString();
     }
     if (!userId) {
-      this.logger.error('Failed to resolve userId after email OTP verification', { email: normalized });
+      this.logger.error('Failed to resolve userId after email OTP verification', {
+        email: normalized,
+      });
       throw new BadRequestException(Messages.AUTH_UNABLE_RESOLVE_USER_ID);
     }
 
