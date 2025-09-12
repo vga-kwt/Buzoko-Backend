@@ -21,6 +21,8 @@ import {
 import { AuthService } from './auth.service';
 import { IssueOtpDto } from './dto/issue-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { IssueEmailOtpDto } from './dto/issue-email-otp.dto';
+import { VerifyEmailOtpDto } from './dto/verify-email-otp.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -59,7 +61,32 @@ export class AuthController {
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.auth.verifyOtp(dto.phoneE164, dto.code);
   }
+  @Post('otp/email/issue')
+  @ApiOperation({ summary: 'Issue OTP to an email' })
+  @ApiOkResponse({
+    description: 'OTP issued and sent via Email',
+    schema: {
+      properties: {
+        success: { type: 'boolean', example: true },
+        ttl: { type: 'number', example: 300 },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Validation error or rate-limit exceeded' })
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async issueEmailOtp(@Body() dto: IssueEmailOtpDto) {
+    return this.auth.issueEmailOtp(dto.email);
+  }
 
+  @Post('otp/email/verify')
+  @ApiOperation({ summary: 'Verify email OTP and issue JWT access/refresh tokens' })
+  @ApiOkResponse({ type: AuthTokensDto })
+  @ApiBadRequestResponse({ description: 'OTP expired or not found' })
+  @ApiUnauthorizedResponse({ description: 'Invalid OTP code' })
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async verifyEmailOtp(@Body() dto: VerifyEmailOtpDto) {
+    return this.auth.verifyEmailOtp(dto.email, dto.code);
+  }
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access/refresh tokens' })
   @ApiOkResponse({ type: AuthTokensDto })

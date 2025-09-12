@@ -10,6 +10,7 @@ import {
 import { RedisService } from '../redis/redis.service';
 import { SmsService } from '../sms/sms.service';
 import { UsersService } from '../users/users.service';
+import { MailService } from '../mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -29,14 +30,15 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly smsService: SmsService,
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly mailService: MailService
   ) {}
 
-  private otpKey(phone: string) {
-    return `otp:${phone}`;
+  private otpKey(identity: string) {
+    return `otp:${identity}`;
   }
-  private otpRateKey(phone: string) {
-    return `otp:rate:${phone}`;
+  private otpRateKey(identity: string) {
+    return `otp:rate:${identity}`;
   }
   private refreshKey(userId: string) {
     return `refresh:${userId}`;
@@ -75,6 +77,37 @@ export class AuthService {
     return { success: true, ttl: this.otpTtl };
   }
 
+  /** Issue OTP to email: rate-limit, persist to Redis, send Email */
+  async issueEmailOtp(email: string): Promise<{ success: boolean; ttl: number }> {
+    const normalized = (email || '').toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      throw new BadRequestException('Invalid email address');
+    }
+
+    const rateKey = this.otpRateKey(normalized);
+    const cur = await this.redis.incr(rateKey);
+    if (cur === 1) {
+      await this.redis.expire(rateKey, this.otpRateWindow);
+    }
+    if (cur > this.otpRateLimit) {
+      throw new BadRequestException('Exceeded max OTP requests. Try later.');
+    }
+
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    await this.redis.set(this.otpKey(normalized), code, this.otpTtl);
+
+    const subject = 'Your verification code';
+    const minutes = Math.floor(this.otpTtl / 60);
+    const text = `Your verification code is ${code}. It will expire in ${minutes} minutes.`;
+    const html = `<p>Your verification code is <b>${code}</b>.<br/>It will expire in ${minutes} minutes.</p>`;
+    await this.mailService.sendMail({ to: normalized, subject, text, html }).catch((e) => {
+      this.logger.warn('Failed to send OTP Email', e);
+      throw new BadRequestException('Failed to send OTP');
+    });
+
+    return { success: true, ttl: this.otpTtl };
+  }
+
   /** Verify OTP: check redis, create or fetch user, issue tokens */
   async verifyOtp(phoneE164: string, code: string): Promise<AuthTokensDto> {
     const cached = await this.redis.get(this.otpKey(phoneE164));
@@ -107,6 +140,41 @@ export class AuthService {
     // if user has client role, set status to ACTIVE (redundant safeguard)
     await this.usersService.activateIfClient(userId).catch(() => null);
 
+    return tokens;
+  }
+
+  /** Verify OTP by email */
+  async verifyEmailOtp(email: string, code: string): Promise<AuthTokensDto> {
+    const normalized = (email || '').toLowerCase();
+    const cached = await this.redis.get(this.otpKey(normalized));
+    if (!cached) {
+      throw new BadRequestException('OTP expired or not found');
+    }
+    if (cached !== code) {
+      throw new UnauthorizedException('Invalid OTP code');
+    }
+
+    await this.redis.del(this.otpKey(normalized));
+
+    // find or create user by email
+    const existing = await this.usersService.findByEmail(normalized);
+    let userId: string;
+    if (existing) {
+      userId = ((existing as any).id || (existing as any)._id)?.toString();
+    } else {
+      const created = await this.usersService.createByEmail(normalized);
+      userId = (created as any).id?.toString();
+    }
+    if (!userId) {
+      this.logger.error('Failed to resolve userId after email OTP verification', { email: normalized });
+      throw new BadRequestException('Unable to resolve user id');
+    }
+
+    const roles = (existing as any)?.roles || ['client'];
+    const tokens = await this.issueTokens(userId, roles);
+    await this.usersService.markEmailVerified(userId);
+    await this.usersService.setLastLogin(userId).catch(() => null);
+    await this.usersService.activateIfClient(userId).catch(() => null);
     return tokens;
   }
 
