@@ -29,5 +29,3 @@ FaqSchema.set('toJSON', {
     return ret;
   },
 });
-
-

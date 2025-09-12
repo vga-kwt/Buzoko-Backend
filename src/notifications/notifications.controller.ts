@@ -18,12 +18,7 @@ export class NotificationsController {
   @Patch(':userId')
   @ApiOperation({ summary: 'Update/toggle notification preferences for a user' })
   @ApiParam({ name: 'userId', required: true, description: 'User id (Mongo ObjectId)' })
-  async updateByUser(
-    @Param('userId') userId: string,
-    @Body() body: UpdateNotificationsDto,
-  ) {
+  async updateByUser(@Param('userId') userId: string, @Body() body: UpdateNotificationsDto) {
     return this.notificationsService.updateUserNotifications(userId, body);
   }
 }
-
-

@@ -3,13 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Notification, NotificationDocument } from './schemas/notification.schema';
 
-export type NotificationUpdates = Partial<Pick<Notification, 'offersAndPromotions' | 'ordersStatus'>>;
+export type NotificationUpdates = Partial<
+  Pick<Notification, 'offersAndPromotions' | 'ordersStatus'>
+>;
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
-    private readonly notificationModel: Model<NotificationDocument>,
+    private readonly notificationModel: Model<NotificationDocument>
   ) {}
 
   async getUserNotifications(userId: string) {
@@ -28,11 +30,7 @@ export class NotificationsService {
   async updateUserNotifications(userId: string, updates: NotificationUpdates) {
     const objectId = new Types.ObjectId(userId);
     const updated = await this.notificationModel
-      .findOneAndUpdate(
-        { userId: objectId },
-        { $set: { ...updates } },
-        { new: true, upsert: true },
-      )
+      .findOneAndUpdate({ userId: objectId }, { $set: { ...updates } }, { new: true, upsert: true })
       .exec();
 
     if (!updated) throw new NotFoundException('Unable to update notifications');
@@ -43,5 +41,3 @@ export class NotificationsService {
     };
   }
 }
-
-

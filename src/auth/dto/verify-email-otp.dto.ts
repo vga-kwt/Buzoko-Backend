@@ -11,5 +11,3 @@ export class VerifyEmailOtpDto {
   @IsNotEmpty()
   code!: string;
 }
-
-

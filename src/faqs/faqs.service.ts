@@ -36,5 +36,3 @@ export class FaqsService {
     return { success: true };
   }
 }
-
-
