@@ -54,8 +54,8 @@ export class AuthService {
       throw new BadRequestException('Exceeded max OTP requests. Try later.');
     }
 
-    // generate code (6-digit)
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // generate code (4-digit)
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
     console.log('Generated OTP:', code);
 
     // store in redis with ttl
