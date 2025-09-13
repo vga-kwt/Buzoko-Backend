@@ -18,6 +18,8 @@ import { LoginDto } from './dto/login.dto';
 import { UserStatus } from '../users/schemas/user.enums';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Messages } from '../common/constants/messages';
+import { ProfilesService } from '../profiles/profiles.service';
+import { Gender } from '../profiles/schemas/profile.enums';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +34,8 @@ export class AuthService {
     private readonly smsService: SmsService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly profilesService: ProfilesService
   ) {}
 
   private otpKey(identity: string) {
@@ -252,6 +255,29 @@ export class AuthService {
   }
 
   /**
+   * Create an empty profile for a user if it doesn't exist (only during login)
+   */
+  private async ensureProfileExists(userId: string): Promise<void> {
+    try {
+      await this.profilesService.create({
+        userId,
+        fullName: "",
+        avatarUrl: "",
+        dob: undefined, // Keep as undefined since it's a Date field
+        gender: Gender.UNKNOWN,
+        locale: "",
+      });
+      this.logger.log(`Profile created for user ${userId} during login`);
+    } catch (e: any) {
+      this.logger.warn(
+        `Failed to create profile for user ${userId}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
+    }
+  }
+
+  /**
    * Register with phone (required), password (required), email optional.
    * Behavior:
    * - If user exists with password -> Conflict (409)
@@ -331,7 +357,9 @@ export class AuthService {
 
     const tokens = await this.issueTokens(userId, roles);
     await this.usersService.setLastLogin(userId).catch(() => null);
-    return tokens;
+    // create profile if it doesn't exist (only during login)
+    await this.ensureProfileExists(userId);
+    return { tokens, userDoc };
   }
 
   async resetPassword(dto: ResetPasswordDto, requesterId: any) {

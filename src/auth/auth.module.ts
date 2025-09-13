@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { RedisModule } from '../redis/redis.module';
 import { SmsModule } from '../sms/sms.module';
 import { MailModule } from '../mail/mail.module';
+import { ProfilesModule } from '../profiles/profiles.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MailModule } from '../mail/mail.module';
     RedisModule,
     SmsModule,
     MailModule,
+    ProfilesModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

@@ -1,4 +1,7 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { CreateProfileDto } from './create-profile.dto';
 
-export class UpdateProfileDto extends PartialType(CreateProfileDto) {}
+// For strict one-to-one relation, prevent updating userId via update DTO
+export class UpdateProfileDto extends PartialType(
+  OmitType(CreateProfileDto, ['userId'] as const),
+) {}
