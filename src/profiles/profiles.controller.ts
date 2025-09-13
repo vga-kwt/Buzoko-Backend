@@ -84,7 +84,7 @@ export class ProfilesController {
   }
 
   /**
-   * Get profile by id (public)
+   * Get profile by id (protected)
    */
   @Get(':id')
   @ApiOperation({ summary: 'Get profile by id' })
