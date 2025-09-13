@@ -313,7 +313,7 @@ export class AuthService {
 
     // create user with hashed password
     await this.usersService.createWithPassword(
-      { phoneE164: phone, email: dto.email },
+      { phoneE164: phone, email: dto.email, roles: dto.roles },
       passwordHash
     );
     return { success: true, message: Messages.AUTH_REGISTER_SUCCESS };
