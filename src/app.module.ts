@@ -9,6 +9,7 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { AddressesModule } from './addresses/addresses.module';
+import { MailModule } from './mail/mail.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,6 +28,7 @@ dotenv.config();
     AuthModule,
     NotificationsModule,
     FaqsModule,
+    MailModule,
     KycModule,
   ],
 })

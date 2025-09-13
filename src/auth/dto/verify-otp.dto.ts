@@ -7,8 +7,8 @@ export class VerifyOtpDto {
   @Matches(/^\+[1-9]\d{1,14}$/, { message: 'phone must be in E.164 format' })
   phoneE164!: string;
 
-  @ApiProperty({ example: '123456', description: 'OTP code (numeric, typically 6 digits)' })
+  @ApiProperty({ example: '1234', description: 'OTP code (numeric, 4 digits)' })
   @IsNotEmpty()
-  @Matches(/^\d{4,8}$/, { message: 'code must be numeric (typically 4-6 digits)' })
+  @Matches(/^\d{4}$/i, { message: 'code must be a 4-digit number' })
   code!: string;
 }

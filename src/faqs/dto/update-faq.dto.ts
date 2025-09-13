@@ -26,5 +26,3 @@ export class UpdateFaqDto extends PartialType(CreateFaqDto) {
   @IsString()
   answerAr?: string;
 }
-
-

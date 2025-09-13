@@ -1,0 +1,41 @@
+export const Messages = {
+  AUTH_OTP_SENT_PHONE: 'OTP sent to phone',
+  AUTH_OTP_SENT_EMAIL: 'OTP sent to email',
+  AUTH_OTP_VERIFIED: 'OTP verified successfully',
+  AUTH_LOGIN_SUCCESS: 'Login successful',
+  AUTH_REGISTER_SUCCESS: 'Registered. Please verify phone before login.',
+  AUTH_LOGOUT_SUCCESS: 'Logged out successfully',
+  AUTH_PASSWORD_RESET: 'Password updated successfully.',
+  AUTH_PASSWORD_SET: 'Password set. Please verify phone before login.',
+  AUTH_INVALID_CREDENTIALS: 'Invalid credentials',
+  AUTH_USER_NOT_ACTIVE: 'User is not active',
+  AUTH_PHONE_NOT_VERIFIED: 'Phone number not verified',
+  AUTH_INVALID_REFRESH: 'Invalid refresh token',
+  AUTH_REFRESH_REVOKED: 'Refresh token revoked or mismatched',
+  AUTH_NEW_PASSWORD_REQUIRED: 'New password is required',
+  AUTH_UNABLE_RESOLVE_USER_ID: 'Unable to resolve user id',
+  AUTH_FAILED_SEND_OTP: 'Failed to send OTP',
+  AUTH_OTP_EXPIRED_OR_NOT_FOUND: 'OTP expired or not found',
+  AUTH_INVALID_OTP: 'Invalid OTP code',
+  AUTH_RATE_LIMIT: 'Exceeded max OTP requests. Try later.',
+  AUTH_ALREADY_REGISTERED: 'User already registered. Use login or reset password.',
+  AUTH_GENERAL_ERROR: 'Something went wrong. Please try again later.',
+  COMMON_USER_NOT_FOUND: 'User not found',
+  COMMON_OK: 'OK',
+
+  CREATE_SUCCESS: 'Record created successfully.',
+  CREATE_FAILURE: 'Failed to create record.',
+
+  UPDATE_SUCCESS: 'Record updated successfully.',
+  UPDATE_FAILURE: 'Failed to update record.',
+
+  DELETE_SUCCESS: 'Record deleted successfully.',
+  DELETE_FAILURE: 'Failed to delete record.',
+
+  FETCH_SUCCESS: 'Record fetched successfully.',
+  FETCH_FAILURE: 'Failed to fetch record.',
+
+  NOT_FOUND: 'Record not found.',
+} as const;
+
+export type MessageKey = keyof typeof Messages;

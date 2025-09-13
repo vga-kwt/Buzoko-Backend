@@ -15,7 +15,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly notificationsService: NotificationsService,
+    private readonly notificationsService: NotificationsService
   ) {}
 
   /**
@@ -52,7 +52,11 @@ export class UsersService {
     try {
       await this.notificationsService.updateUserNotifications(created._id.toString(), {});
     } catch (e: any) {
-      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+      this.logger.warn(
+        `Failed to initialize notifications for user ${created._id}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
     }
     return this.toPublic(created);
   }
@@ -78,6 +82,39 @@ export class UsersService {
    */
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email: email?.toLowerCase() }).exec();
+  }
+
+  /**
+   * Create a new user by email (idempotent). If a user exists with this email,
+   * return the existing user as PublicUserDto.
+   */
+  async createByEmail(email: string): Promise<PublicUserDto> {
+    const normalized = email?.toLowerCase();
+    if (!normalized) {
+      throw new BadRequestException('email is required');
+    }
+    const existing = await this.userModel.findOne({ email: normalized }).exec();
+    if (existing) return this.toPublic(existing);
+
+    const created = await this.userModel.create({ email: normalized });
+    this.logger.log(`Created user ${created._id} (email=${normalized})`);
+    try {
+      await this.notificationsService.updateUserNotifications(created._id.toString(), {});
+    } catch (e: any) {
+      this.logger.warn(
+        `Failed to initialize notifications for user ${created._id}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
+    }
+    return this.toPublic(created);
+  }
+
+  /** Mark email as verified and set emailVerifiedAt */
+  async markEmailVerified(id: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(id, { $set: { emailVerifiedAt: new Date(), status: UserStatus.ACTIVE } })
+      .exec();
   }
 
   /**
@@ -192,7 +229,11 @@ export class UsersService {
       try {
         await this.notificationsService.updateUserNotifications(existing._id.toString(), {});
       } catch (e: any) {
-        this.logger.warn(`Failed to initialize notifications for user ${existing._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+        this.logger.warn(
+          `Failed to initialize notifications for user ${existing._id}: ${
+            e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+          }`
+        );
       }
       return this.toPublic(existing as any);
     }
@@ -208,7 +249,11 @@ export class UsersService {
     try {
       await this.notificationsService.updateUserNotifications(created._id.toString(), {});
     } catch (e: any) {
-      this.logger.warn(`Failed to initialize notifications for user ${created._id}: ${e && typeof e === 'object' && 'message' in e ? (e as any).message : e}`);
+      this.logger.warn(
+        `Failed to initialize notifications for user ${created._id}: ${
+          e && typeof e === 'object' && 'message' in e ? (e as any).message : e
+        }`
+      );
     }
     return this.toPublic(created as any);
   }

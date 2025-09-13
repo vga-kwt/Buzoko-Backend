@@ -3,8 +3,8 @@ import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 import { NotificationsService } from './notifications.service';
 
-@ApiTags('Notifications')
-@Controller('notifications')
+@ApiTags('Notifications Preferences')
+@Controller('notifications-preferences')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
@@ -18,12 +18,7 @@ export class NotificationsController {
   @Patch(':userId')
   @ApiOperation({ summary: 'Update/toggle notification preferences for a user' })
   @ApiParam({ name: 'userId', required: true, description: 'User id (Mongo ObjectId)' })
-  async updateByUser(
-    @Param('userId') userId: string,
-    @Body() body: UpdateNotificationsDto,
-  ) {
+  async updateByUser(@Param('userId') userId: string, @Body() body: UpdateNotificationsDto) {
     return this.notificationsService.updateUserNotifications(userId, body);
   }
 }
-
-

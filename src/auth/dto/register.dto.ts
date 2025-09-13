@@ -1,6 +1,7 @@
-import { IsNotEmpty, Matches, MinLength, IsOptional, IsEmail } from 'class-validator';
+import { IsNotEmpty, Matches, MinLength, IsOptional, IsEmail, IsArray, ArrayNotEmpty, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRole } from '../../users/schemas/user.enums';
 
 export class RegisterDto {
   @ApiProperty({ example: '+15551234567', description: 'Phone number in E.164 format' })
@@ -13,6 +14,13 @@ export class RegisterDto {
   @IsEmail()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   email?: string;
+
+  @ApiProperty({ required: false, enum: UserRole, isArray: true, example: [UserRole.CLIENT] })
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(UserRole, { each: true })
+  roles?: UserRole[];
 
   @ApiProperty({ example: 'Password', description: 'Password must be at least 8 characters' })
   @IsNotEmpty()

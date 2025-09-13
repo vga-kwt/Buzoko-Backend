@@ -34,5 +34,3 @@ NotificationSchema.set('toJSON', {
     return ret;
   },
 });
-
-
