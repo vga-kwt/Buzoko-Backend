@@ -6,6 +6,10 @@ export class PublicProfileDto {
   @ApiProperty()
   @Expose()
   id!: string;
+  
+  @ApiProperty()
+  @Expose()
+  userId!: string;
 
   @ApiProperty({ required: false })
   @Expose()
