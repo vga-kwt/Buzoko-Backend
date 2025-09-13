@@ -80,7 +80,7 @@ export class ProfilesController {
     const userId = req.user?.sub || req.user?.id;
     if (!userId) return null;
     const doc = await this.profilesService.findByUserId(userId);
-    return doc ? this.profilesService.toPublic(doc) : null;
+    return doc ? this.profilesService.toPublic(doc , userId) : null;
   }
 
   /**

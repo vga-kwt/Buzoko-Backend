@@ -91,8 +91,21 @@ export class ProfilesService {
   /**
    * Convert a Mongoose document to PublicProfileDto
    */
-  toPublic(doc: ProfileDocument): PublicProfileDto {
+  toPublic(doc: ProfileDocument, userId?: string): PublicProfileDto {
     const plain = doc.toJSON ? doc.toJSON() : doc;
-    return plainToInstance(PublicProfileDto, plain, { excludeExtraneousValues: true });
+  
+    const dto = plainToInstance(PublicProfileDto, plain, {
+      excludeExtraneousValues: true,
+    });
+  
+    // ✅ append userId
+    if (userId) {
+      dto.userId = userId.toString();
+    } else if (doc.userId) {
+      dto.userId = doc.userId.toString();
+    }
+  
+    return dto;
   }
+  
 }
