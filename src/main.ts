@@ -5,8 +5,22 @@ import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import * as os from 'os';
 
 dotenv.config();
+
+function getLanIPv4Addresses(): string[] {
+  const nets = os.networkInterfaces();
+  const ips: string[] = [];
+  for (const iface of Object.values(nets)) {
+    for (const net of iface || []) {
+      if (net && net.family === 'IPv4' && !net.internal) {
+        ips.push(net.address);
+      }
+    }
+  }
+  return ips;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -42,8 +56,19 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`Server listening on http://localhost:${port}`);
-  console.log(`Swagger docs available at http://localhost:${port}/api/docs`);
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`Server listening on http://${host}:${port}`);
+  console.log(`Swagger docs available at http://${host}:${port}/api/docs`);
+
+  // Helpful LAN URLs for access from other devices on the same network
+  const lanIps = getLanIPv4Addresses();
+  if (lanIps.length) {
+    console.log('You can access this server from another device on your LAN at:');
+    lanIps.forEach((ip) => {
+      console.log(`  - http://${ip}:${port}`);
+      console.log(`    Swagger: http://${ip}:${port}/api/docs`);
+    });
+  }
 }
 bootstrap();
