@@ -72,9 +72,10 @@ export class AuthService {
 
     if (!smsResult.success) {
       this.logger.warn('Failed to send OTP SMS', smsResult);
-      throw new BadRequestException(Messages.AUTH_FAILED_SEND_OTP);
+      throw new BadRequestException(Messages.AUTH_FAILED_SEND_OTP + `, OTP is -> ${code}`);
     }
 
+    // Sending otp for testing purpose, will remove it later on prod.
     return { success: true, ttl: this.otpTtl, code: code };
   }
 
