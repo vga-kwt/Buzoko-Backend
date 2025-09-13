@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { MailModule } from './mail/mail.module';
+import { VendorsModule } from './vendors/vendors.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -30,6 +31,7 @@ dotenv.config();
     FaqsModule,
     MailModule,
     KycModule,
+    VendorsModule,
   ],
 })
 export class AppModule {}
