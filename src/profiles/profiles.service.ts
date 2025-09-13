@@ -20,23 +20,32 @@ export class ProfilesService {
     // ensure userId is ObjectId
     const userId = new Types.ObjectId(createDto.userId);
 
-    // check existing
+    // check existing (fast path)
     const existing = await this.profileModel.findOne({ userId }).exec();
     if (existing) {
       return this.toPublic(existing);
     }
 
-    const created = await this.profileModel.create({
-      userId,
-      fullName: createDto.fullName,
-      avatarUrl: createDto.avatarUrl,
-      dob: createDto.dob ? new Date(createDto.dob) : undefined,
-      gender: createDto.gender,
-      locale: createDto.locale,
-    });
+    try {
+      const created = await this.profileModel.create({
+        userId,
+        fullName: createDto.fullName,
+        avatarUrl: createDto.avatarUrl,
+        dob: createDto.dob ? new Date(createDto.dob) : undefined,
+        gender: createDto.gender,
+        locale: createDto.locale,
+      });
 
-    this.logger.log(`Profile created for user ${userId}`);
-    return this.toPublic(created);
+      this.logger.log(`Profile created for user ${userId}`);
+      return this.toPublic(created);
+    } catch (err: any) {
+      // Handle race condition: unique index violation on userId
+      if (err && err.code === 11000) {
+        const doc = await this.profileModel.findOne({ userId }).exec();
+        if (doc) return this.toPublic(doc);
+      }
+      throw err;
+    }
   }
 
   /**
@@ -61,8 +70,10 @@ export class ProfilesService {
    * Update profile (partial)
    */
   async update(id: string, updateDto: UpdateProfileDto): Promise<PublicProfileDto> {
+    // Strict one-to-one: never allow changing the userId via update
+    const { userId: _ignore, ...safeUpdate } = (updateDto as any) || {};
     const updated = await this.profileModel
-      .findByIdAndUpdate(id, { $set: updateDto }, { new: true })
+      .findByIdAndUpdate(id, { $set: safeUpdate }, { new: true })
       .exec();
     if (!updated) throw new NotFoundException('Profile not found');
     return this.toPublic(updated);

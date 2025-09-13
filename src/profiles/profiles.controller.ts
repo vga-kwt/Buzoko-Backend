@@ -69,9 +69,12 @@ export class ProfilesController {
    */
   @Get(':id')
   @ApiOperation({ summary: 'Get profile by id' })
+  @ApiBearerAuth()
   @ApiParam({ name: 'id', required: true, description: 'Profile id' })
   @ApiOkResponse({ type: PublicProfileDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
   @ApiNotFoundResponse({ description: 'Profile not found' })
+  @UseGuards(JwtAuthGuard)
   async getById(@Param('id') id: string): Promise<PublicProfileDto> {
     const doc = await this.profilesService.findById(id);
     return this.profilesService.toPublic(doc);
@@ -100,7 +103,7 @@ export class ProfilesController {
    * Partial update — only owner or admin
    */
   @Patch(':id')
-  @ApiOperation({ summary: 'Update profile by id (owner or admin)' })
+  @ApiOperation({ summary: 'Update profile by id.' })
   @ApiParam({ name: 'id', required: true, description: 'Profile id' })
   @ApiBearerAuth()
   @ApiOkResponse({ type: PublicProfileDto })

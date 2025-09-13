@@ -359,7 +359,7 @@ export class AuthService {
     await this.usersService.setLastLogin(userId).catch(() => null);
     // create profile if it doesn't exist (only during login)
     await this.ensureProfileExists(userId);
-    return tokens;
+    return { tokens, userDoc };
   }
 
   async resetPassword(dto: ResetPasswordDto, requesterId: any) {
