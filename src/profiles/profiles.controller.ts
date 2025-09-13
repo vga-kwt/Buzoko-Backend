@@ -65,22 +65,6 @@ export class ProfilesController {
   }
 
   /**
-   * Get profile by id (public)
-   */
-  @Get(':id')
-  @ApiOperation({ summary: 'Get profile by id' })
-  @ApiBearerAuth()
-  @ApiParam({ name: 'id', required: true, description: 'Profile id' })
-  @ApiOkResponse({ type: PublicProfileDto })
-  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
-  @ApiNotFoundResponse({ description: 'Profile not found' })
-  @UseGuards(JwtAuthGuard)
-  async getById(@Param('id') id: string): Promise<PublicProfileDto> {
-    const doc = await this.profilesService.findById(id);
-    return this.profilesService.toPublic(doc);
-  }
-
-  /**
    * Get profile for current user (protected)
    */
   @Get('/me')
@@ -97,6 +81,22 @@ export class ProfilesController {
     if (!userId) return null;
     const doc = await this.profilesService.findByUserId(userId);
     return doc ? this.profilesService.toPublic(doc) : null;
+  }
+
+  /**
+   * Get profile by id (public)
+   */
+  @Get(':id')
+  @ApiOperation({ summary: 'Get profile by id' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', required: true, description: 'Profile id' })
+  @ApiOkResponse({ type: PublicProfileDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
+  @ApiNotFoundResponse({ description: 'Profile not found' })
+  @UseGuards(JwtAuthGuard)
+  async getById(@Param('id') id: string): Promise<PublicProfileDto> {
+    const doc = await this.profilesService.findById(id);
+    return this.profilesService.toPublic(doc);
   }
 
   /**
