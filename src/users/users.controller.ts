@@ -57,6 +57,29 @@ export class UsersController {
   }
 
   /**
+   * Protected endpoint - current user. Requires JWT guard to be enabled.
+   * Once your auth module is ready, enable UseGuards(JwtAuthGuard) and
+   * ensure req.user contains the authenticated user id.
+   */
+  @Get('me')
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    schema: { oneOf: [{ $ref: getSchemaPath(PublicUserDto) }, { type: 'null' }] },
+    description: 'Returns current user or null if not authenticated',
+  })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
+  @UseGuards(JwtAuthGuard)
+  async me(@Req() req: any) {
+    // NOTE: when guarded, req.user should contain userId (or whole user object)
+    console.log('req.use ----------------------- r', req.user);
+    const userId = req.user?.sub || req.user?.id;
+    if (!userId) return null;
+    const userDoc = await this.usersService.findById(userId);
+    return this.usersService.toPublic(userDoc);
+  }
+
+  /**
    * Public user lookup by id. Returns PublicUserDto.
    */
   @Get(':id')
@@ -83,28 +106,6 @@ export class UsersController {
     if (!phone) return { message: 'phone query param required' };
     const userDoc = await this.usersService.findByPhone(phone);
     return userDoc ? this.usersService.toPublic(userDoc) : null;
-  }
-
-  /**
-   * Protected endpoint - current user. Requires JWT guard to be enabled.
-   * Once your auth module is ready, enable UseGuards(JwtAuthGuard) and
-   * ensure req.user contains the authenticated user id.
-   */
-  @Get('me')
-  @ApiOperation({ summary: 'Get current authenticated user' })
-  @ApiBearerAuth()
-  @ApiOkResponse({
-    schema: { oneOf: [{ $ref: getSchemaPath(PublicUserDto) }, { type: 'null' }] },
-    description: 'Returns current user or null if not authenticated',
-  })
-  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token' })
-  @UseGuards(JwtAuthGuard)
-  async me(@Req() req: any) {
-    // NOTE: when guarded, req.user should contain userId (or whole user object)
-    const userId = req.user?.sub || req.user?.id;
-    if (!userId) return null;
-    const userDoc = await this.usersService.findById(userId);
-    return this.usersService.toPublic(userDoc);
   }
 
   /**
