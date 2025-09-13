@@ -15,10 +15,13 @@ export class Kyc {
   userId!: Types.ObjectId;
 
   @Prop({ type: String, required: true, trim: true, maxlength: 100 })
-  label!: string;
+  title!: string;
 
   @Prop({ type: [String], default: [] })
   urls!: string[];
+
+  @Prop({ type: String, maxlength: 500 })
+  comments?: string;
 
   @Prop({ type: String, enum: Object.values(KycStatus), default: KycStatus.PENDING, index: true })
   status!: KycStatus;
