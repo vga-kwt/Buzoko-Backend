@@ -299,23 +299,27 @@ export class AuthService {
         throw new ConflictException(Messages.AUTH_ALREADY_REGISTERED);
       }
       // set password on existing user
+      const userId = (existing as any).id || (existing as any)._id;
       const updated = await this.usersService.setPasswordHash(
-        (existing as any).id || (existing as any)._id,
+        userId,
         passwordHash
       );
       // optionally update email
       if (dto.email) {
-        await this.usersService.update((existing as any).id || (existing as any)._id, {
+        await this.usersService.update(userId, {
           email: dto.email,
         } as any);
       }
+      await this.ensureProfileExists(userId);
     }
 
     // create user with hashed password
-    await this.usersService.createWithPassword(
+    const createdUser = await this.usersService.createWithPassword(
       { phoneE164: phone, email: dto.email, roles: dto.roles },
       passwordHash
     );
+    const newUserId = (createdUser as any).id || (createdUser as any)._id;
+    await this.ensureProfileExists(newUserId);
     return { success: true, message: Messages.AUTH_REGISTER_SUCCESS };
   }
 
@@ -358,7 +362,6 @@ export class AuthService {
     const tokens = await this.issueTokens(userId, roles);
     await this.usersService.setLastLogin(userId).catch(() => null);
     // create profile if it doesn't exist (only during login)
-    await this.ensureProfileExists(userId);
     return { tokens, userDoc };
   }
 
